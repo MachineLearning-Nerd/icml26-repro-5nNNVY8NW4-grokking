@@ -1,0 +1,44 @@
+{
+  "space_id": "DineshAI/5nNNVY8NW4",
+  "emoji": "🎯",
+  "created_at": "2026-07-16T15:21:50+00:00",
+  "title": "Repro - To Grok Grokking: Provable Grokking in Ridge Regression",
+  "paper": {
+    "arxiv_id": "2601.19791",
+    "openreview_id": "5nNNVY8NW4"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-5nNNVY8NW4"
+  ],
+  "private": false,
+  "last_page": "conclusion",
+  "local_path_artifacts": [
+    {
+      "path": "outputs/full/trajectories.csv",
+      "abs_path": "/home/dineshai/Drives/Code/AllCode/ReproduceICML/papers/icml26-repro-5nNNVY8NW4-grokking/outputs/full/trajectories.csv",
+      "size": 110699,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/full/runs.csv",
+      "abs_path": "/home/dineshai/Drives/Code/AllCode/ReproduceICML/papers/icml26-repro-5nNNVY8NW4-grokking/outputs/full/runs.csv",
+      "size": 52617,
+      "artifact_type": "dataset"
+    },
+    {
+      "path": "outputs/full/aggregates.csv",
+      "abs_path": "/home/dineshai/Drives/Code/AllCode/ReproduceICML/papers/icml26-repro-5nNNVY8NW4-grokking/outputs/full/aggregates.csv",
+      "size": 4468,
+      "artifact_type": "dataset"
+    }
+  ],
+  "local_dashboards": {
+    "grokking-ridge-repro": null
+  },
+  "local_artifacts": [
+    "grokking-ridge-repro/repro-bundle:v0"
+  ],
+  "autosync": true,
+  "artifacts_bucket": "DineshAI/5nNNVY8NW4-artifacts"
+}

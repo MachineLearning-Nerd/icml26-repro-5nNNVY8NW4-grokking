@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "title": "Repro - To Grok Grokking: Provable Grokking in Ridge Regression",
+  "emoji": "🎯",
+  "space_id": "DineshAI/5nNNVY8NW4",
+  "paper": {
+    "arxiv_id": "2601.19791",
+    "openreview_id": "5nNNVY8NW4"
+  },
+  "tags": [
+    "icml2026-repro",
+    "paper-5nNNVY8NW4"
+  ],
+  "updated_at": "2026-07-16T15:23:19+00:00",
+  "root": {
+    "slug": "index",
+    "title": "Repro - To Grok Grokking: Provable Grokking in Ridge Regression",
+    "file": "pages/index.md",
+    "children": [
+      {
+        "slug": "full-reproduction",
+        "title": "Full reproduction",
+        "file": "pages/full-reproduction/page.md",
+        "children": []
+      },
+      {
+        "slug": "negative-controls",
+        "title": "Negative controls",
+        "file": "pages/negative-controls/page.md",
+        "children": []
+      },
+      {
+        "slug": "artifact-bundle",
+        "title": "Artifact bundle",
+        "file": "pages/artifact-bundle/page.md",
+        "children": []
+      },
+      {
+        "slug": "grokking-ridge-repro",
+        "title": "grokking-ridge-repro",
+        "file": "pages/grokking-ridge-repro/page.md",
+        "children": []
+      },
+      {
+        "slug": "00-claim-scorecard",
+        "title": "00 Claim scorecard",
+        "file": "pages/00-claim-scorecard/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-1-three-stages",
+        "title": "Claim 1 - three stages",
+        "file": "pages/claim-1-three-stages/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-2-tuning-control",
+        "title": "Claim 2 - tuning control",
+        "file": "pages/claim-2-tuning-control/page.md",
+        "children": []
+      },
+      {
+        "slug": "claim-3-quantitative-bounds",
+        "title": "Claim 3 - quantitative bounds",
+        "file": "pages/claim-3-quantitative-bounds/page.md",
+        "children": []
+      },
+      {
+        "slug": "methods",
+        "title": "Methods",
+        "file": "pages/methods/page.md",
+        "children": []
+      },
+      {
+        "slug": "conclusion",
+        "title": "Conclusion",
+        "file": "pages/conclusion/page.md",
+        "children": []
+      }
+    ]
+  },
+  "agent_view_tokens": 2191,
+  "revision": "1784215399958176243"
+}

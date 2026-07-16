@@ -1,0 +1,87 @@
+{
+  "claim_1": {
+    "dimension_vs_limiting_loss_loglog": {
+      "intercept": -0.5779621617992154,
+      "r_squared": 0.9999192370759898,
+      "slope": -0.9318891414274327
+    },
+    "maximum_late_population_loss": 0.0009091934970459165,
+    "maximum_limiting_population_loss": 0.0009091934969670355,
+    "median_delay": 22666.0,
+    "median_t1": 213.0,
+    "median_t2": 22871.5,
+    "median_t2_over_t1_plus_one": 107.1416180551004,
+    "minimum_population_loss_after_fit": 0.8096451218769309,
+    "seeds": 6,
+    "seeds_passing_all_three_stages": 6,
+    "verdict": "VERIFIED in the paper-default Gaussian identity-feature experiment"
+  },
+  "claim_2": {
+    "delay_amplification_smallest_vs_largest_lambda": 16.04369493220021,
+    "elimination_nu2": 0.001,
+    "elimination_seeds": 6,
+    "elimination_seeds_with_t1_empty_and_t2_zero": 6,
+    "initialization_t2_vs_log_nu2": {
+      "intercept": 22856.483333333326,
+      "r_squared": 0.9999999999979041,
+      "slope": 4999.757316980266
+    },
+    "verdict": "VERIFIED, with elimination operationalized as no delayed-onset stage",
+    "weight_decay_t2_loglog": {
+      "intercept": 0.8266447176033584,
+      "r_squared": 0.9999999999990467,
+      "slope": -1.0000025682855225
+    }
+  },
+  "claim_3": {
+    "learning_rate_t2_loglog": {
+      "intercept": 10.036988389026012,
+      "r_squared": 0.9999999999907772,
+      "slope": -1.0000262999639247
+    },
+    "maximum_observed_to_t1_upper_ratio": 0.4880402858359232,
+    "minimum_observed_to_t2_lower_ratio": 1.1392258070546484,
+    "qualifying_config_seed_rows": 126,
+    "t1_upper_bound_passes": 126,
+    "t2_lower_bound_passes": 126,
+    "verdict": "VERIFIED for Eq. (8) in the paper's Gaussian experimental specialization"
+  },
+  "failure_boundaries": [
+    "The Gaussian feature distribution is unbounded; the paper invokes a high-probability finite-sample norm event in Remark A.14, not global bounded support.",
+    "The source gives defaults but not numeric sweep arrays or seeds; sweep values beyond defaults are independently prespecified, with the lambda powers recovered visibly from the supplied Figure 2 raster.",
+    "No author code repository is linked in the v3 TeX/PDF or found by exact-title/arXiv-id GitHub repository searches on 2026-07-15.",
+    "This reproduction covers the scored ridge-regression/GD claims, not the paper's nonlinear-network extensions or noisy-label appendix.",
+    "Arbitrarily small is a theorem-level quantifier. Finite experiments demonstrate sub-threshold convergence and a near 1/m limiting-error scaling, not the literal universal quantifier."
+  ],
+  "paper": {
+    "arxiv_id": "2601.19791",
+    "arxiv_version": "v3",
+    "openreview_id": "5nNNVY8NW4",
+    "title": "To Grok Grokking: Provable Grokking in Ridge Regression"
+  },
+  "protocol": {
+    "c": 0.01,
+    "compute": "local CPU only",
+    "epsilon": 0.01,
+    "gpu_used": false,
+    "method": "closed-form evaluation of exact full-batch GD via eigendecomposition of X X^T",
+    "paid_service_used": false,
+    "primary": {
+      "eta": 1,
+      "m": 1000,
+      "n": 100,
+      "nu2": 1,
+      "weight_decay": 0.0001
+    },
+    "seeds": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "total_config_seed_runs": 132,
+    "unique_eigendecompositions": 36
+  }
+}
