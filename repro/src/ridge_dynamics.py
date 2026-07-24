@@ -24,14 +24,29 @@ class ThresholdResult:
 
 
 class GaussianRidgeBasis:
-    """A deterministic problem draw that can be reused across hyperparameters."""
+    """A deterministic problem draw that can be reused across hyperparameters.
 
-    def __init__(self, seed: int, n: int, m: int) -> None:
+    The teacher θ* is configurable via *teacher_kind* and *teacher_norm* to test
+    Theorem 4.2's claim that grokking occurs for *any* realizable teacher.
+    """
+
+    def __init__(
+        self,
+        seed: int,
+        n: int,
+        m: int,
+        *,
+        teacher_kind: str = "random",
+        teacher_norm: float = 1.0,
+        teacher_sparsity: int = 0,
+    ) -> None:
         if not 0 < n < m:
             raise ValueError("the reproduction requires an overparameterized n < m problem")
         self.seed = int(seed)
         self.n = int(n)
         self.m = int(m)
+        self.teacher_kind = teacher_kind
+        self.teacher_norm = float(teacher_norm)
 
         data_ss, teacher_ss, init_ss = np.random.SeedSequence(seed).spawn(3)
         data_rng = np.random.default_rng(data_ss)
@@ -39,8 +54,7 @@ class GaussianRidgeBasis:
         init_rng = np.random.default_rng(init_ss)
 
         self.x = data_rng.normal(0.0, 1.0 / math.sqrt(m), size=(n, m))
-        teacher = teacher_rng.normal(size=m)
-        self.theta_star = teacher / np.linalg.norm(teacher)
+        self.theta_star = self._make_teacher(teacher_rng, m, teacher_kind, teacher_norm, teacher_sparsity)
         self.standard_init = init_rng.normal(size=m)
 
         gram = self.x @ self.x.T
@@ -63,6 +77,37 @@ class GaussianRidgeBasis:
         self.teacher_null = self.theta_star - self.vt.T @ self.teacher_row
         self.init_row_standard = self.vt @ self.standard_init
         self.init_null_standard = self.standard_init - self.vt.T @ self.init_row_standard
+
+    @staticmethod
+    def _make_teacher(
+        rng: np.random.Generator,
+        m: int,
+        kind: str,
+        norm: float,
+        sparsity: int,
+    ) -> np.ndarray:
+        """Construct an arbitrary realizable teacher θ* with prescribed structure."""
+        if kind == "random":
+            v = rng.normal(size=m)
+            return norm * v / np.linalg.norm(v)
+        if kind == "sparse":
+            k = sparsity if sparsity > 0 else max(1, m // 10)
+            v = np.zeros(m)
+            idx = rng.choice(m, size=k, replace=False)
+            v[idx] = rng.normal(size=k)
+            return norm * v / np.linalg.norm(v)
+        if kind == "one_hot":
+            v = np.zeros(m)
+            v[rng.integers(m)] = 1.0
+            return norm * v
+        if kind == "uniform":
+            return np.full(m, norm / math.sqrt(m))
+        if kind == "top_k":
+            k = sparsity if sparsity > 0 else max(1, m // 10)
+            v = np.zeros(m)
+            v[:k] = 1.0
+            return norm * v / np.linalg.norm(v)
+        raise ValueError(f"unknown teacher_kind: {kind}")
 
     def model(self, *, weight_decay: float, nu2: float, eta: float) -> "SpectralRidgeGD":
         return SpectralRidgeGD(self, weight_decay=weight_decay, nu2=nu2, eta=eta)

@@ -1,17 +1,17 @@
 {
   "claim_1": {
     "dimension_vs_limiting_loss_loglog": {
-      "intercept": -0.5779621617992154,
-      "r_squared": 0.9999192370759898,
+      "intercept": -0.577962161799217,
+      "r_squared": 0.9999192370759897,
       "slope": -0.9318891414274327
     },
-    "maximum_late_population_loss": 0.0009091934970459165,
-    "maximum_limiting_population_loss": 0.0009091934969670355,
+    "maximum_late_population_loss": 0.0009091934970459166,
+    "maximum_limiting_population_loss": 0.0009091934969670356,
     "median_delay": 22666.0,
     "median_t1": 213.0,
     "median_t2": 22871.5,
     "median_t2_over_t1_plus_one": 107.1416180551004,
-    "minimum_population_loss_after_fit": 0.8096451218769309,
+    "minimum_population_loss_after_fit": 0.809645121876931,
     "seeds": 6,
     "seeds_passing_all_three_stages": 6,
     "verdict": "VERIFIED in the paper-default Gaussian identity-feature experiment"
@@ -22,29 +22,118 @@
     "elimination_seeds": 6,
     "elimination_seeds_with_t1_empty_and_t2_zero": 6,
     "initialization_t2_vs_log_nu2": {
-      "intercept": 22856.483333333326,
+      "intercept": 22856.483333333363,
       "r_squared": 0.9999999999979041,
       "slope": 4999.757316980266
     },
     "verdict": "VERIFIED, with elimination operationalized as no delayed-onset stage",
     "weight_decay_t2_loglog": {
-      "intercept": 0.8266447176033584,
+      "intercept": 0.8266447176033394,
       "r_squared": 0.9999999999990467,
-      "slope": -1.0000025682855225
+      "slope": -1.000002568285524
     }
+  },
+  "claim_2_arbitrary_teachers": {
+    "max_t1_across_teachers": 230,
+    "max_t2_across_teachers": 24995,
+    "min_t1_across_teachers": 202,
+    "min_t2_across_teachers": 22160,
+    "per_kind_summary": {
+      "one_hot": {
+        "grokking": 6,
+        "median_t1": 213.0,
+        "median_t2": 23007.5,
+        "runs": 6
+      },
+      "random": {
+        "grokking": 24,
+        "median_t1": 213.0,
+        "median_t2": 22715.0,
+        "runs": 24
+      },
+      "sparse": {
+        "grokking": 18,
+        "median_t1": 213.0,
+        "median_t2": 22936.0,
+        "runs": 18
+      },
+      "top_k": {
+        "grokking": 6,
+        "median_t1": 213.0,
+        "median_t2": 22839.0,
+        "runs": 6
+      },
+      "uniform": {
+        "grokking": 6,
+        "median_t1": 212.5,
+        "median_t2": 22931.5,
+        "runs": 6
+      }
+    },
+    "runs_t1_bound_holds": 60,
+    "runs_t2_bound_holds": 60,
+    "runs_with_three_stage_grokking": 60,
+    "teacher_kinds_tested": [
+      "one_hot",
+      "random",
+      "sparse",
+      "top_k",
+      "uniform"
+    ],
+    "teacher_norms_tested": [
+      0.1,
+      0.5,
+      1.0,
+      2.0
+    ],
+    "total_teacher_runs": 60,
+    "verdict": ""
   },
   "claim_3": {
     "learning_rate_t2_loglog": {
       "intercept": 10.036988389026012,
       "r_squared": 0.9999999999907772,
-      "slope": -1.0000262999639247
+      "slope": -1.000026299963925
     },
-    "maximum_observed_to_t1_upper_ratio": 0.4880402858359232,
+    "maximum_observed_to_t1_upper_ratio": 0.48804028583592346,
     "minimum_observed_to_t2_lower_ratio": 1.1392258070546484,
-    "qualifying_config_seed_rows": 126,
-    "t1_upper_bound_passes": 126,
-    "t2_lower_bound_passes": 126,
+    "qualifying_config_seed_rows": 186,
+    "t1_upper_bound_passes": 186,
+    "t2_lower_bound_passes": 186,
     "verdict": "VERIFIED for Eq. (8) in the paper's Gaussian experimental specialization"
+  },
+  "claim_4_sample_size_amplification": {
+    "mean_t1_by_n": [
+      47.666666666666664,
+      103.5,
+      214.83333333333334,
+      449.6666666666667
+    ],
+    "mean_t2_by_n": [
+      23376.166666666668,
+      23184.333333333332,
+      22856.5,
+      22259.5
+    ],
+    "median_t2_over_t1_plus_one_largest_n": 48.50577550502091,
+    "median_t2_over_t1_plus_one_smallest_n": 491.913808076422,
+    "sample_sizes": [
+      25,
+      50,
+      100,
+      200
+    ],
+    "t1_vs_n_loglog_slope": {
+      "intercept": 0.41031359595880934,
+      "r_squared": 0.9998279514822308,
+      "slope": 1.0766996978650805
+    },
+    "t2_vs_n_loglog_slope": {
+      "intercept": 10.13852345241249,
+      "r_squared": 0.9385221508597095,
+      "slope": -0.023239728878508604
+    },
+    "verdict": ""
   },
   "failure_boundaries": [
     "The Gaussian feature distribution is unbounded; the paper invokes a high-probability finite-sample norm event in Remark A.14, not global bounded support.",
@@ -81,7 +170,7 @@
       4,
       5
     ],
-    "total_config_seed_runs": 132,
-    "unique_eigendecompositions": 36
+    "total_config_seed_runs": 192,
+    "unique_eigendecompositions": 90
   }
 }
