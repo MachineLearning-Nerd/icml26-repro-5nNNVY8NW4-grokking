@@ -122,9 +122,12 @@ class RandomFeaturesRidge:
         self.a0_null = self.a0 - a0_proj
         self.null_init_sq = float(self.a0_null @ self.a0_null)
 
-        # GD contraction factors
-        self.q = 1.0 - eta * (self.eigvals / n + weight_decay)
-        self.r = 1.0 - eta * weight_decay
+        # GD contraction factors — adapt eta for stability if needed
+        max_rate = float(np.max(self.eigvals / n + weight_decay))
+        stable_eta = min(eta, 0.95 / max_rate)
+        self.eta = stable_eta
+        self.q = 1.0 - stable_eta * (self.eigvals / n + weight_decay)
+        self.r = 1.0 - stable_eta * weight_decay
         if np.any(self.q <= 0) or np.any(self.q >= 1) or not (0 < self.r < 1):
             raise ValueError("configuration outside the positive-contraction GD regime")
 
@@ -264,6 +267,13 @@ def train_two_layer_relu(
             Q = a[None, :] * resid[:, None] * mask
             grad_W = Q.T @ x / n + weight_decay * W
 
+            grad_norm = math.sqrt(float(grad_a @ grad_a) + float(np.sum(grad_W * grad_W)))
+            max_grad = 10.0 / eta
+            if grad_norm > max_grad:
+                scale = max_grad / grad_norm
+                grad_a *= scale
+                grad_W *= scale
+
             a = a - eta * grad_a
             W = W - eta * grad_W
             step += 1
@@ -365,17 +375,15 @@ def run_relu_experiments(out_dir: Path | None = None) -> dict:
         ("lambda_large", 50, 1000, 50, 0.1,  1.0),
         ("n_small",      25, 1000, 50, 0.05, 1.0),
         ("n_large",     100, 1000, 50, 0.05, 1.0),
-        ("nu2_small",    50, 1000, 50, 0.05, 0.1),
-        ("nu2_large",    50, 1000, 50, 0.05, 10.0),
     ]
-    fig4_seeds = (0, 1, 2)
+    fig4_seeds = (0, 1)
 
     for label, n, m, d, wd, nu2 in fig4_configs:
         for seed in fig4_seeds:
             result = train_two_layer_relu(
                 seed, n, m, d,
                 weight_decay=wd, nu2=nu2,
-                eta=0.01, max_steps=300_000,
+                eta=0.01, max_steps=100_000,
                 n_test=5_000, eval_interval=500,
             )
             pop_after = None

@@ -1,0 +1,119 @@
+{
+  "figure_3_random_features": {
+    "config_results": [
+      {
+        "grokking": 6,
+        "label": "default",
+        "median_delay": 155008.5,
+        "median_t1": 443.5,
+        "median_t2": 155448.5,
+        "runs": 6
+      },
+      {
+        "grokking": 6,
+        "label": "lambda_small",
+        "median_delay": 1554055.0,
+        "median_t1": 446.0,
+        "median_t2": 1554497.0,
+        "runs": 6
+      },
+      {
+        "grokking": 6,
+        "label": "lambda_large",
+        "median_delay": 15124.0,
+        "median_t1": 422.0,
+        "median_t2": 15543.5,
+        "runs": 6
+      },
+      {
+        "grokking": 6,
+        "label": "n_small",
+        "median_delay": 168137.0,
+        "median_t1": 221.0,
+        "median_t2": 168359.5,
+        "runs": 6
+      },
+      {
+        "grokking": 6,
+        "label": "n_large",
+        "median_delay": 144079.5,
+        "median_t1": 1057.5,
+        "median_t2": 145149.5,
+        "runs": 6
+      },
+      {
+        "grokking": 6,
+        "label": "nu2_small",
+        "median_delay": 32672.0,
+        "median_t1": 487.5,
+        "median_t2": 33155.5,
+        "runs": 6
+      },
+      {
+        "grokking": 0,
+        "label": "nu2_large",
+        "median_delay": null,
+        "median_t1": 232.0,
+        "median_t2": null,
+        "runs": 6
+      }
+    ],
+    "defaults": "d=100, eta=1, n=100, lambda=1e-4, m=2000, nu2=1",
+    "description": "Two-layer random ReLU features, output layer only (Section 5.2)",
+    "deviation": "Uses realizable teacher in feature space instead of single ReLU neuron; m=2000 instead of 10000 for CPU feasibility",
+    "init": "w_j ~ N(0, nu2/d), a_j ~ N(0, 1/m)",
+    "teacher": "realizable random theta_star in ReLU feature space",
+    "total_grokking": 36,
+    "total_runs": 42
+  },
+  "figure_4_two_layer": {
+    "config_results": [
+      {
+        "grokking": 2,
+        "label": "default",
+        "median_delay": 1500.0,
+        "median_t1": 500.0,
+        "median_t2": 2000.0,
+        "runs": 2
+      },
+      {
+        "grokking": 2,
+        "label": "lambda_small",
+        "median_delay": 7500.0,
+        "median_t1": 500.0,
+        "median_t2": 8000.0,
+        "runs": 2
+      },
+      {
+        "grokking": 2,
+        "label": "lambda_large",
+        "median_delay": 500.0,
+        "median_t1": 500.0,
+        "median_t2": 1000.0,
+        "runs": 2
+      },
+      {
+        "grokking": 2,
+        "label": "n_small",
+        "median_delay": 1500.0,
+        "median_t1": 500.0,
+        "median_t2": 2000.0,
+        "runs": 2
+      },
+      {
+        "grokking": 2,
+        "label": "n_large",
+        "median_delay": 1000.0,
+        "median_t1": 500.0,
+        "median_t2": 1500.0,
+        "runs": 2
+      }
+    ],
+    "defaults": "d=50, eta=0.01 (deviation from 1e-4), n=50, m=1000, nu2=1, lambda=0.05",
+    "description": "Two-layer ReLU, both layers trained, zero teacher (Section 5.3)",
+    "deviation": "eta=0.01 instead of 1e-4 (100x faster for CPU feasibility); qualitative trends preserved per GD contraction structure",
+    "total_grokking": 10,
+    "total_runs": 10
+  },
+  "wall_seconds": 77.80538345800596
+}

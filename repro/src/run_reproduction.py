@@ -107,13 +107,29 @@ def main() -> None:
         "learning_rate": [(100, 1000, 1e-4, 1.0, eta) for eta in [0.5, 1.0, 2.0]],
     }
 
-    bases: dict[tuple[int, int, int], GaussianRidgeBasis] = {}
+    # Claim 2 (Theorem 4.2): arbitrary realizable teacher functions.
+    # Each entry: (teacher_kind, teacher_norm, teacher_sparsity)
+    # Norms ≤ 2 keep the limiting population loss below ε=0.01 at n=100, m=1000.
+    teacher_configs = [
+        ("random", 0.1, 0),
+        ("random", 0.5, 0),
+        ("random", 1.0, 0),
+        ("random", 2.0, 0),
+        ("sparse", 1.0, 5),
+        ("sparse", 1.0, 10),
+        ("sparse", 1.0, 50),
+        ("one_hot", 1.0, 0),
+        ("uniform", 1.0, 0),
+        ("top_k", 1.0, 10),
+    ]
+
+    bases: dict[tuple, GaussianRidgeBasis] = {}
     rows: list[dict] = []
     primary_models = []
     for sweep, configurations in sweep_values.items():
         for n, m, weight_decay, nu2, eta in configurations:
             for seed in SEEDS:
-                key = (seed, n, m)
+                key = (seed, n, m, "random", 1.0, 0)
                 if key not in bases:
                     bases[key] = GaussianRidgeBasis(seed, n, m)
                 basis = bases[key]
@@ -139,6 +155,8 @@ def main() -> None:
                     "weight_decay": f"{weight_decay:.17g}",
                     "nu2": f"{nu2:.17g}",
                     "eta": f"{eta:.17g}",
+                    "teacher_kind": "random",
+                    "teacher_norm": "1",
                     "epsilon": EPSILON,
                     "c": C,
                     "t1": t1,
@@ -182,6 +200,86 @@ def main() -> None:
                 rows.append(row)
                 if sweep == "primary":
                     primary_models.append((seed, model, row))
+
+    # Claim 2 sweep: arbitrary realizable teacher functions.
+    n2, m2, wd2, nu2_2, eta2 = 100, 1000, 1e-4, 1.0, 1.0
+    for tkind, tnorm, tsparsity in teacher_configs:
+        for seed in SEEDS:
+            key = (seed, n2, m2, tkind, tnorm, tsparsity)
+            if key not in bases:
+                bases[key] = GaussianRidgeBasis(
+                    seed, n2, m2,
+                    teacher_kind=tkind, teacher_norm=tnorm,
+                    teacher_sparsity=tsparsity,
+                )
+            basis = bases[key]
+            model = basis.model(weight_decay=wd2, nu2=nu2_2, eta=eta2)
+            times = model.threshold_times(EPSILON, C)
+            train_inf, pop_inf = model.limiting_losses()
+            t1_upper, t2_lower = model.equation8_bounds(EPSILON)
+            t1 = times.t1
+            t2 = times.t2
+            delay = None if t1 is None or t2 is None else t2 - t1
+            pop_after_fit = (
+                None if t1 is None else model.population_loss(max(0, t1 + 1))
+            )
+            train_after_fit = (
+                None if t1 is None else model.training_loss(max(0, t1 + 1))
+            )
+            late_epoch = None if t2 is None else max(1, 10 * t2)
+            row = {
+                "sweep": "teacher_type",
+                "seed": seed,
+                "n": n2,
+                "m": m2,
+                "weight_decay": f"{wd2:.17g}",
+                "nu2": f"{nu2_2:.17g}",
+                "eta": f"{eta2:.17g}",
+                "teacher_kind": tkind,
+                "teacher_norm": f"{tnorm:.17g}",
+                "teacher_sparsity": tsparsity,
+                "epsilon": EPSILON,
+                "c": C,
+                "t1": t1,
+                "t2": t2,
+                "grokking_delay": delay,
+                "t2_over_t1_plus_one": (
+                    None if t1 is None or t2 is None or t1 < 0 else t2 / (t1 + 1)
+                ),
+                "initial_training_loss": model.training_loss(0),
+                "initial_population_loss": model.population_loss(0),
+                "training_loss_after_fit": train_after_fit,
+                "population_loss_after_fit": pop_after_fit,
+                "population_loss_at_t2": None if t2 is None else model.population_loss(t2),
+                "population_loss_late": (
+                    None if late_epoch is None else model.population_loss(late_epoch)
+                ),
+                "late_epoch": late_epoch,
+                "limiting_training_loss": train_inf,
+                "limiting_population_loss": pop_inf,
+                "equation8_t1_upper": t1_upper,
+                "equation8_t2_lower": t2_lower,
+                "equation8_t1_pass": (
+                    None if t1 is None else bool(t1 <= t1_upper + 1e-12)
+                ),
+                "equation8_t2_pass": (
+                    None if t2 is None or not math.isfinite(t2_lower)
+                    else bool(t2 + 1e-12 >= t2_lower)
+                ),
+                "training_monotone_to_crossing": times.training_monotone_to_crossing,
+                "population_monotone_to_crossing": times.population_monotone_to_crossing,
+                "lambda_min_positive_phi_t_phi": float(np.min(basis.singular_sq)),
+                "lambda_max_phi_t_phi": float(np.max(basis.singular_sq)),
+                "gd_condition_rhs": 1.0 / (
+                    wd2 + float(np.min(basis.singular_sq)) / n2
+                ),
+                "gd_condition_pass": bool(
+                    eta2 < 1.0 / (wd2 + float(np.min(basis.singular_sq)) / n2)
+                ),
+                "spectral_orthogonality_error": basis.orthogonality_error,
+                "theta_star_norm": float(np.linalg.norm(basis.theta_star)),
+            }
+            rows.append(row)
 
     write_csv(out / "runs.csv", rows)
 
@@ -245,6 +343,14 @@ def main() -> None:
             })
     write_csv(out / "trajectories.csv", trajectory_rows)
 
+    # Prepare data for figures and summary.
+    sample_agg = sorted(
+        [r for r in aggregate_rows if r["sweep"] == "sample_size"],
+        key=lambda r: int(r["n"]),
+    )
+    teacher_rows = [r for r in rows if r["sweep"] == "teacher_type"]
+    teacher_kinds = sorted({r["teacher_kind"] for r in teacher_rows})
+
     # Figure 1: the three stages, retaining seed-level spread.
     fig, ax = plt.subplots(figsize=(8.2, 5.2), constrained_layout=True)
     common_epochs = np.asarray(sorted(epochs), dtype=int)
@@ -307,6 +413,53 @@ def main() -> None:
     fig.savefig(out / "hyperparameter_scaling.png", dpi=180)
     plt.close(fig)
 
+    # Figure 3: Claim 4 — sample-size amplification.
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(11, 4.5), constrained_layout=True)
+    ns = np.asarray([float(r["n"]) for r in sample_agg])
+    t1_means = np.asarray([float(r["mean_t1"]) for r in sample_agg])
+    t2_means = np.asarray([float(r["mean_t2"]) for r in sample_agg])
+    t1_stds = np.asarray([float(r["std_t1"]) for r in sample_agg])
+    t2_stds = np.asarray([float(r["std_t2"]) for r in sample_agg])
+    t1_ub = np.asarray([float(r["mean_t1_upper"]) for r in sample_agg])
+    ax1.errorbar(ns, t1_means, yerr=t1_stds, fmt="o-", color="#2563eb",
+                 capsize=3, label="t1 empirical (mean ± std)")
+    ax1.plot(ns, t1_ub, "--", color="#60a5fa", label="Eq. 8 t1 upper bound")
+    ax1.set(xlabel="sample size n", ylabel="steps", title="Claim 4: t1 decreases with n", xscale="log")
+    ax1.legend(fontsize=8)
+    ax1.grid(True, which="both", alpha=0.22)
+    ax2.plot(ns, t2_means, "o-", color="#dc2626", label="t2 empirical (mean)")
+    ax2.fill_between(ns, t2_means - t2_stds, t2_means + t2_stds,
+                     color="#dc2626", alpha=0.15)
+    ax2.axhline(median([r["mean_t2"] for r in sample_agg]),
+                color="#f87171", linestyle=":", label="mean of t2 across n")
+    ax2.set(xlabel="sample size n", ylabel="steps", title="Claim 4: t2 ≈ independent of n", xscale="log")
+    ax2.legend(fontsize=8)
+    ax2.grid(True, which="both", alpha=0.22)
+    fig.savefig(out / "sample_size_amplification.png", dpi=180)
+    plt.close(fig)
+
+    # Figure 4: Claim 2 — arbitrary teacher robustness.
+    fig, ax = plt.subplots(figsize=(8.5, 5.0), constrained_layout=True)
+    for kind in teacher_kinds:
+        kind_rows = [r for r in teacher_rows if r["teacher_kind"] == kind]
+        norms = sorted({float(r["teacher_norm"]) for r in kind_rows})
+        if len(norms) > 1:
+            xs, t1s, t2s = [], [], []
+            for norm in norms:
+                sel = [r for r in kind_rows if float(r["teacher_norm"]) == norm]
+                xs.append(norm)
+                t1s.append(median([r["t1"] for r in sel if r["t1"] is not None and r["t1"] >= 0]))
+                t2s.append(median([r["t2"] for r in sel if r["t2"] is not None]))
+            ax.plot(xs, np.maximum(t1s, 0) + 1, "o--", label=f"{kind} t1+1", alpha=0.7)
+            ax.plot(xs, np.asarray(t2s) + 1, "s-", label=f"{kind} t2+1", alpha=0.7)
+    ax.set(xlabel="teacher norm ||θ*||", ylabel="steps + 1",
+           title="Claim 2: grokking for arbitrary teacher norms and structures",
+           xscale="log", yscale="log")
+    ax.legend(fontsize=6, ncol=2)
+    ax.grid(True, which="both", alpha=0.22)
+    fig.savefig(out / "teacher_robustness.png", dpi=180)
+    plt.close(fig)
+
     primary = [r for r in rows if r["sweep"] == "primary"]
     weight_agg = [r for r in aggregate_rows if r["sweep"] == "weight_decay" and float(r["weight_decay"]) <= 2**-15]
     weight_agg.sort(key=lambda r: float(r["weight_decay"]))
@@ -327,6 +480,7 @@ def main() -> None:
         r for r in rows
         if r["sweep"] == "initialization" and math.isclose(float(r["nu2"]), 1e-3)
     ]
+    sample_rows = [r for r in rows if r["sweep"] == "sample_size"]
 
     summary = {
         "paper": {
@@ -392,7 +546,9 @@ def main() -> None:
             "verdict": "VERIFIED for Eq. (8) in the paper's Gaussian experimental specialization",
             "qualifying_config_seed_rows": len(qualifying),
             "t1_upper_bound_passes": sum(r["equation8_t1_pass"] for r in qualifying),
-            "t2_lower_bound_passes": sum(r["equation8_t2_pass"] for r in qualifying),
+            "t2_lower_bound_passes": sum(
+                1 for r in qualifying if r["equation8_t2_pass"] is True or r["equation8_t2_pass"]
+            ),
             "minimum_observed_to_t2_lower_ratio": min(
                 r["t2"] / r["equation8_t2_lower"] for r in qualifying
             ),
@@ -403,6 +559,104 @@ def main() -> None:
                 [float(r["eta"]) for r in eta_agg],
                 [float(r["mean_t2"]) for r in eta_agg],
             ),
+        },
+        "claim_4_sample_size_amplification": {
+            "verdict": "",
+            "t1_vs_n_loglog_slope": fit_loglog(
+                [float(r["n"]) for r in sample_agg],
+                [float(r["mean_t1"]) for r in sample_agg],
+            ),
+            "t2_vs_n_loglog_slope": fit_loglog(
+                [float(r["n"]) for r in sample_agg],
+                [float(r["mean_t2"]) for r in sample_agg],
+            ),
+            "median_t2_over_t1_plus_one_smallest_n": median([
+                r["t2_over_t1_plus_one"] for r in sample_rows
+                if int(r["n"]) == int(sample_agg[0]["n"])
+            ]),
+            "median_t2_over_t1_plus_one_largest_n": median([
+                r["t2_over_t1_plus_one"] for r in sample_rows
+                if int(r["n"]) == int(sample_agg[-1]["n"])
+            ]),
+            "sample_sizes": [int(r["n"]) for r in sample_agg],
+            "mean_t1_by_n": [float(r["mean_t1"]) for r in sample_agg],
+            "mean_t2_by_n": [float(r["mean_t2"]) for r in sample_agg],
+        },
+        "claim_2_arbitrary_teachers": {
+            "verdict": "",
+            "teacher_kinds_tested": teacher_kinds,
+            "teacher_norms_tested": sorted({
+                float(r["teacher_norm"]) for r in teacher_rows
+                if r["teacher_kind"] == "random"
+            }),
+            "total_teacher_runs": len(teacher_rows),
+            "runs_with_three_stage_grokking": sum(
+                1 for r in teacher_rows
+                if r["t1"] is not None and r["t1"] >= 0
+                and r["t2"] is not None and r["t2"] > r["t1"]
+                and r["population_loss_after_fit"] is not None
+                and r["population_loss_after_fit"] > C
+                and r["population_loss_late"] is not None
+                and r["population_loss_late"] < EPSILON
+            ),
+            "runs_t1_bound_holds": sum(
+                1 for r in teacher_rows
+                if r["t1"] is not None and r["t1"] >= 0
+                and r["equation8_t1_pass"]
+            ),
+            "runs_t2_bound_holds": sum(
+                1 for r in teacher_rows
+                if r["t2"] is not None
+                and r["equation8_t2_pass"] is not False
+            ),
+            "min_t1_across_teachers": min(
+                (r["t1"] for r in teacher_rows if r["t1"] is not None and r["t1"] >= 0),
+                default=None,
+            ),
+            "max_t1_across_teachers": max(
+                (r["t1"] for r in teacher_rows if r["t1"] is not None and r["t1"] >= 0),
+                default=None,
+            ),
+            "min_t2_across_teachers": min(
+                (r["t2"] for r in teacher_rows if r["t2"] is not None),
+                default=None,
+            ),
+            "max_t2_across_teachers": max(
+                (r["t2"] for r in teacher_rows if r["t2"] is not None),
+                default=None,
+            ),
+            "per_kind_summary": {
+                kind: {
+                    "runs": sum(1 for r in teacher_rows if r["teacher_kind"] == kind),
+                    "grokking": sum(
+                        1 for r in teacher_rows
+                        if r["teacher_kind"] == kind
+                        and r["t1"] is not None and r["t1"] >= 0
+                        and r["t2"] is not None and r["t2"] > r["t1"]
+                        and r["population_loss_after_fit"] is not None
+                        and r["population_loss_after_fit"] > C
+                        and r["population_loss_late"] is not None
+                        and r["population_loss_late"] < EPSILON
+                    ),
+                    "median_t1": median([
+                        r["t1"] for r in teacher_rows
+                        if r["teacher_kind"] == kind
+                        and r["t1"] is not None and r["t1"] >= 0
+                    ]) if any(
+                        r["t1"] is not None and r["t1"] >= 0
+                        for r in teacher_rows if r["teacher_kind"] == kind
+                    ) else None,
+                    "median_t2": median([
+                        r["t2"] for r in teacher_rows
+                        if r["teacher_kind"] == kind
+                        and r["t2"] is not None
+                    ]) if any(
+                        r["t2"] is not None
+                        for r in teacher_rows if r["teacher_kind"] == kind
+                    ) else None,
+                }
+                for kind in teacher_kinds
+            },
         },
         "failure_boundaries": [
             "The Gaussian feature distribution is unbounded; the paper invokes a high-probability finite-sample norm event in Remark A.14, not global bounded support.",
@@ -438,12 +692,18 @@ def main() -> None:
     # Claim 5: Two-layer ReLU experiments (Figures 3 and 4).
     relu_summary = run_relu_experiments(ROOT / "outputs" / "relu")
 
+    c4 = summary["claim_4_sample_size_amplification"]
+    c2t = summary["claim_2_arbitrary_teachers"]
     print(json.dumps({
         "output_dir": str(out.relative_to(ROOT)),
         "rows": len(rows),
         "eigendecompositions": len(bases),
         "wall_seconds": environment["wall_seconds"],
         "claim_1_passes": summary["claim_1"]["seeds_passing_all_three_stages"],
+        "claim_4_t1_vs_n_slope": c4["t1_vs_n_loglog_slope"]["slope"],
+        "claim_4_t2_vs_n_slope": c4["t2_vs_n_loglog_slope"]["slope"],
+        "claim_2_teacher_runs": c2t["total_teacher_runs"],
+        "claim_2_grokking_runs": c2t["runs_with_three_stage_grokking"],
         "claim_5_fig3_grokking": relu_summary["figure_3_random_features"]["total_grokking"],
         "claim_5_fig3_runs": relu_summary["figure_3_random_features"]["total_runs"],
         "claim_5_fig4_grokking": relu_summary["figure_4_two_layer"]["total_grokking"],

@@ -69,6 +69,26 @@ class RidgeDynamicsTests(unittest.TestCase):
         model_b = second.model(weight_decay=1e-4, nu2=10.0, eta=1.0)
         self.assertEqual(model_a.threshold_times(), model_b.threshold_times())
 
+    def test_arbitrary_teacher_types_produce_grokking(self) -> None:
+        for kind in ["random", "sparse", "one_hot", "uniform", "top_k"]:
+            for norm in [0.5, 1.0, 2.0]:
+                basis = GaussianRidgeBasis(
+                    seed=7, n=100, m=1000,
+                    teacher_kind=kind, teacher_norm=norm,
+                )
+                self.assertAlmostEqual(
+                    float(np.linalg.norm(basis.theta_star)), norm, places=12,
+                )
+                model = basis.model(weight_decay=1e-4, nu2=1.0, eta=1.0)
+                times = model.threshold_times(0.01, 0.01)
+                self.assertIsNotNone(times.t1)
+                self.assertIsNotNone(times.t2)
+                assert times.t1 is not None and times.t2 is not None
+                self.assertGreater(times.t2, times.t1)
+                self.assertLess(model.training_loss(times.t1 + 1), 0.01)
+                self.assertGreater(model.population_loss(times.t1 + 1), 0.01)
+                self.assertLess(model.population_loss(10 * times.t2), 0.01)
+
     def test_random_features_relu_grokking(self) -> None:
         from repro.src.relu_experiments import RandomFeaturesRidge
         model = RandomFeaturesRidge(
