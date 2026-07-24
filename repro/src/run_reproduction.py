@@ -26,6 +26,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 from repro.src.ridge_dynamics import GaussianRidgeBasis
+from repro.src.relu_experiments import run_relu_experiments
 
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -433,12 +434,20 @@ def main() -> None:
         },
     }
     (out / "environment.json").write_text(json.dumps(environment, indent=2, sort_keys=True) + "\n")
+
+    # Claim 5: Two-layer ReLU experiments (Figures 3 and 4).
+    relu_summary = run_relu_experiments(ROOT / "outputs" / "relu")
+
     print(json.dumps({
         "output_dir": str(out.relative_to(ROOT)),
         "rows": len(rows),
         "eigendecompositions": len(bases),
         "wall_seconds": environment["wall_seconds"],
         "claim_1_passes": summary["claim_1"]["seeds_passing_all_three_stages"],
+        "claim_5_fig3_grokking": relu_summary["figure_3_random_features"]["total_grokking"],
+        "claim_5_fig3_runs": relu_summary["figure_3_random_features"]["total_runs"],
+        "claim_5_fig4_grokking": relu_summary["figure_4_two_layer"]["total_grokking"],
+        "claim_5_fig4_runs": relu_summary["figure_4_two_layer"]["total_runs"],
     }, sort_keys=True))
 
 

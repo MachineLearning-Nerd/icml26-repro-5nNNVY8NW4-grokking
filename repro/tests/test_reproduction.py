@@ -69,6 +69,21 @@ class RidgeDynamicsTests(unittest.TestCase):
         model_b = second.model(weight_decay=1e-4, nu2=10.0, eta=1.0)
         self.assertEqual(model_a.threshold_times(), model_b.threshold_times())
 
+    def test_random_features_relu_grokking(self) -> None:
+        from repro.src.relu_experiments import RandomFeaturesRidge
+        model = RandomFeaturesRidge(
+            seed=0, n=100, m=2000, d=100,
+            weight_decay=1e-4, nu2=1.0, eta=1.0, n_test=2000,
+        )
+        t1, t2 = model.threshold_times(max_steps=500000)
+        self.assertIsNotNone(t1)
+        self.assertIsNotNone(t2)
+        assert t1 is not None and t2 is not None
+        self.assertGreaterEqual(t1, 0)
+        self.assertGreater(t2, t1)
+        self.assertLess(model.training_loss(t1 + 1), 0.01)
+        self.assertGreater(model.population_loss(t1 + 1), 0.01)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
