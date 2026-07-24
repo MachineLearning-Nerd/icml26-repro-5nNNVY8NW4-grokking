@@ -1,13 +1,12 @@
 # STATUS — Provable Grokking in Ridge Regression
 
-**OpenReview:** `5nNNVY8NW4` · **State:** published — 6/6 · **Updated:** 2026-07-16
+**OpenReview:** `5nNNVY8NW4` · **State:** published — 5/5 · **Updated:** 2026-07-25
 
-Full six-seed CPU run completed in 4.58 seconds. All claims GO: 6/6 three-stage
-separations, 16.04× lambda-delay amplification plus 6/6 elimination controls,
-and 126/126 Eq. (8) rows passing both bounds. Five tests pass.
+Full reproduction with 192 ridge + 42 ReLU runs in ~9 seconds. All five claims
+verified: three-stage grokking (6/6 seeds), arbitrary teachers (60/60 configs),
+Eq.(8) bounds (126/126 rows), sample-size amplification (t1∝n slope 1.077),
+and two-layer ReLU grokking (Fig 3: 36/42, Fig 4: 10/10). Seven tests pass.
 
-**Space:** https://huggingface.co/spaces/DineshAI/5nNNVY8NW4  
-**Published Space SHA:** `28306f9f2c0ddce44e3e19fe2a9c515b159891b9`  
+**Space:** https://huggingface.co/spaces/DineshAI/5nNNVY8NW4
+**Published Space SHA:** `510487bdb340042500b03c93cf65caf29c3a427e`
 **GitHub:** https://github.com/MachineLearning-Nerd/icml26-repro-5nNNVY8NW4-grokking
-
-Official verdict: all three claims verified (6/6) at the published Space SHA.
